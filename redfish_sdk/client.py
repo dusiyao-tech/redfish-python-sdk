@@ -1026,6 +1026,24 @@ class RedfishClient:
         """
         return self._managers.log_services(manager_id)
 
+    def reset_manager(
+        self, reset_type: str = "ForceRestart", manager_id: Optional[str] = None
+    ) -> RedfishResponse:
+        """Reset the BMC using its advertised Manager.Reset target and allowable values."""
+        return self._managers.reset(reset_type, manager_id)
+
+    def get_manager_log_service(
+        self, log_id: Optional[str] = None, manager_id: Optional[str] = None
+    ) -> Log:
+        """Select a Manager LogService by advertised Id/URI, or a sole member."""
+        return self._managers.log_service(log_id, manager_id)
+
+    def clear_manager_log(
+        self, log_id: Optional[str] = None, manager_id: Optional[str] = None
+    ) -> None:
+        """Clear a Manager log only when it advertises LogService.ClearLog."""
+        self._managers.clear_log(log_id, manager_id)
+
     def get_manager_log_entries(
         self,
         log_id: Optional[str] = None,

@@ -17,9 +17,10 @@ Provides access to:
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING, List, Optional, Union
 
 from ..exceptions import RedfishException, RedfishValidationError
+from ..models.actions import ActionMap
 from ..models.chassis import PCIeDevice
 from ..models.drive import Drive
 from ..models.fru import Fru
@@ -614,9 +615,9 @@ class SystemsManager:
 # Internal helpers — Actions block parsing
 # ---------------------------------------------------------------------------
 
-def _extract_action(actions: Optional[dict], action_name: str) -> Optional[dict]:
+def _extract_action(actions: Optional[Union[dict, ActionMap]], action_name: str) -> Optional[dict]:
     """Return the Action sub-dict for ``action_name`` or None."""
-    if not actions or not isinstance(actions, dict):
+    if not actions or not isinstance(actions, (dict, ActionMap)):
         return None
     action = actions.get(action_name)
     if not isinstance(action, dict):
@@ -624,7 +625,7 @@ def _extract_action(actions: Optional[dict], action_name: str) -> Optional[dict]
     return action
 
 
-def _extract_action_target(actions: Optional[dict], action_name: str) -> Optional[str]:
+def _extract_action_target(actions: Optional[Union[dict, ActionMap]], action_name: str) -> Optional[str]:
     """Return the Action target URL for ``action_name`` or None."""
     action = _extract_action(actions, action_name)
     if not action:

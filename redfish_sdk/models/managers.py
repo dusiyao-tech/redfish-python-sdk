@@ -6,8 +6,9 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+from .actions import ActionDescriptor, ActionMap
 from .common import Entity, Link, Status
 from .oem import Oem
 
@@ -31,6 +32,26 @@ class SerialConsole(BaseModel):
     connect_types_supported: Optional[List[str]] = Field(None, alias="ConnectTypesSupported")
     max_concurrent_sessions: Optional[int] = Field(None, alias="MaxConcurrentSessions")
     service_enabled: Optional[bool] = Field(None, alias="ServiceEnabled")
+
+
+class ManagerResetAction(ActionDescriptor):
+    reset_type_allowable_values: Optional[List[str]] = Field(None, alias="ResetType@Redfish.AllowableValues")
+
+
+class ManagerActions(ActionMap):
+    manager_reset: Optional[ManagerResetAction] = Field(None, alias="#Manager.Reset")
+    oem: Optional[Dict[str, Any]] = Field(None, alias="Oem")
+
+    @field_validator("manager_reset", mode="before")
+    @classmethod
+    def valid_descriptor(cls, value: Any) -> Any:
+        return value if isinstance(value, (dict, ManagerResetAction)) else None
+
+
+class ManagerResetRequest(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    reset_type: str = Field(..., alias="ResetType")
 
 
 class Manager(Entity):
@@ -62,7 +83,7 @@ class Manager(Entity):
     oem: Optional[Oem] = Field(None, alias="Oem")
     # Redfish Actions block (e.g. #Manager.Reset, #Manager.ResetToDefaults,
     # OEM downloads such as #Manager.GeneralDownload).
-    actions: Optional[Dict[str, Any]] = Field(None, alias="Actions")
+    actions: Optional[ManagerActions] = Field(None, alias="Actions")
 
 
 # ---------------------------------------------------------------------------

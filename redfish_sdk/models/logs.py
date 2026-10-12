@@ -4,11 +4,21 @@ Log service models.
 """
 from __future__ import annotations
 
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 
-from pydantic import Field
+from pydantic import Field, field_validator
 
+from .actions import ActionDescriptor, ActionMap
 from .common import Entity, Link, Status
+
+
+class LogActions(ActionMap):
+    clear_log: Optional[ActionDescriptor] = Field(None, alias="#LogService.ClearLog")
+
+    @field_validator("clear_log", mode="before")
+    @classmethod
+    def valid_descriptor(cls, value: Any) -> Any:
+        return value if isinstance(value, (dict, ActionDescriptor)) else None
 
 
 class Log(Entity):
@@ -26,7 +36,7 @@ class Log(Entity):
     service_enabled: Optional[bool] = Field(None, alias="ServiceEnabled")
     status: Optional[Status] = Field(None, alias="Status")
     # Redfish Actions block (e.g. #LogService.ClearLog).
-    actions: Optional[Dict[str, Any]] = Field(None, alias="Actions")
+    actions: Optional[LogActions] = Field(None, alias="Actions")
 
 
 class LogEntry(Entity):
