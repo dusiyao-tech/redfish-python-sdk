@@ -16,6 +16,7 @@ multi-vendor BMCs and bare-metal servers through the DMTF Redfish API.
 - **Comprehensive hardware queries** — CPU, memory, drives, GPU, NIC, PCIe, PSU, fans — one line of code each
 - **Power & boot management** — power on/off, restart, PXE/HDD/BIOS boot source switching
 - **Multi-vendor compatible** — auto-adapts to OEM extensions from Huawei, xFusion, Lenovo, HPE, Dell, and others
+- **Link-based discovery** — nested resources follow BMC-advertised URLs, with legacy paths used only when links are absent
 - **Pydantic v2 models** — all return values are strongly-typed objects with full IDE autocompletion
 - **Context manager** — `with` statement support for automatic connection cleanup
 - **Minimal dependencies** — only `requests`, `pydantic`, and `urllib3`
