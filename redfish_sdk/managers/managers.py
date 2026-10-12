@@ -16,7 +16,7 @@ import logging
 from typing import TYPE_CHECKING, List, Optional
 
 from ..exceptions import RedfishNotFoundError, RedfishValidationError
-from ..models.common import Collection, Link
+from ..models.common import Collection, Link, RedfishResponse
 from ..models.logs import Log, LogEntry
 from ..models.managers import (
     DnsService,
@@ -94,6 +94,38 @@ class ManagersManager:
         manager = self.get(manager_id)
         odata_id = require_log_services_link(manager, f"Manager {manager.id!r}")
         return self._client._get_collection(odata_id, Log)
+
+    def reset(self, reset_type: str = "ForceRestart", manager_id: Optional[str] = None) -> RedfishResponse:
+        manager = self.get(manager_id)
+        action = (manager.actions or {}).get("#Manager.Reset")
+        target = action.get("target") if isinstance(action, dict) else None
+        if not isinstance(target, str) or not target:
+            raise RedfishValidationError("Manager does not advertise #Manager.Reset with an action target")
+        allowed = action.get("ResetType@Redfish.AllowableValues")
+        if allowed is None and action.get("@Redfish.ActionInfo"):
+            info = self._http.get_raw(action["@Redfish.ActionInfo"])
+            for parameter in info.get("Parameters", []):
+                if parameter.get("Name") == "ResetType":
+                    allowed = parameter.get("AllowableValues")
+                    break
+        if not reset_type or (allowed is not None and reset_type not in allowed):
+            raise RedfishValidationError(f"Unsupported ResetType {reset_type!r}; advertised values: {allowed}")
+        return self._http.post(target, RedfishResponse, raw_body={"ResetType": reset_type})
+
+    def log_service(self, log_id: Optional[str] = None, manager_id: Optional[str] = None) -> Log:
+        from ._log_helpers import require_log_services_link, resolve_log_service
+
+        manager = self.get(manager_id)
+        path = require_log_services_link(manager, f"Manager {manager.id!r}")
+        return resolve_log_service(self._client, path, log_id)
+
+    def clear_log(self, log_id: Optional[str] = None, manager_id: Optional[str] = None) -> None:
+        log = self.log_service(log_id, manager_id)
+        action = (log.actions or {}).get("#LogService.ClearLog")
+        target = action.get("target") if isinstance(action, dict) else None
+        if not isinstance(target, str) or not target:
+            raise RedfishValidationError(f"Manager log {log.id!r} does not advertise #LogService.ClearLog")
+        self._http.post(target, RedfishResponse, raw_body={})
 
     def log_entries(
         self,
