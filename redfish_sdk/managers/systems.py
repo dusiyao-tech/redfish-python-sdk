@@ -125,7 +125,8 @@ class SystemsManager:
 
         """
         system = self.get(system_id)
-        return self._client._get_collection(system.odata_id + "/Memory", Memory)
+        path = system.memory and system.memory.odata_id
+        return self._client._get_collection(path or f"{system.odata_id}/Memory", Memory)
 
     def storages(self, system_id: Optional[str] = None) -> List[Storage]:
         """
@@ -153,7 +154,8 @@ class SystemsManager:
 
         """
         system = self.get(system_id)
-        return self._http.get(f"{system.odata_id}/Bios", Bios)
+        path = system.bios and system.bios.odata_id
+        return self._http.get(path or f"{system.odata_id}/Bios", Bios)
 
     def log_services(self, system_id: Optional[str] = None) -> List[Log]:
         """
