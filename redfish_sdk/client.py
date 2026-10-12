@@ -41,7 +41,8 @@ from __future__ import annotations
 
 import logging
 from functools import cached_property
-from typing import Any, Dict, List, Optional, Type, TypeVar
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Type, TypeVar, Union
 
 from .exceptions import RedfishException
 from .http_client import RedfishHttpClient
@@ -82,7 +83,7 @@ from .models.systems import Bios, BootOption, System, SystemPatchSetting
 from .models.task import Task, TaskService
 from .models.telemetry import MetricDefinition, MetricReport, MetricReportDefinition, TelemetryService, Triggers
 from .models.thermal import Fan, InletHistoryTemperature, Thermal
-from .models.update import ClientCertificate, FirmwareInventory, UpdateService
+from .models.update import ClientCertificate, FirmwareInventory, FirmwareUpdateResponse, UpdateService
 
 logger = logging.getLogger(__name__)
 
@@ -203,6 +204,31 @@ class RedfishClient:
     def _updates(self):
         from .managers.update import UpdateServiceManager
         return UpdateServiceManager(self)
+
+    def upload_sign_key(self, file_path: Union[str, Path]) -> FirmwareUpdateResponse:
+        """Upload an AMI signing key using the advertised UploadSignKey action."""
+        return self._updates.upload_sign_key(file_path)
+
+    def upload_firmware_image(self, file_path: Union[str, Path]) -> FirmwareUpdateResponse:
+        """Upload an AMI image using the advertised UploadFirmwareImage action."""
+        return self._updates.upload_firmware_image(file_path)
+
+    def upload_firmware_file(
+        self, file_path: Union[str, Path], *, field_name: str = "UpdateFile",
+        update_parameters: Optional[Dict[str, Any]] = None,
+        oem_parameters: Optional[Dict[str, Any]] = None,
+    ) -> FirmwareUpdateResponse:
+        """Upload through the advertised push URI; HttpPushUri file names may vary by vendor."""
+        return self._updates.upload_firmware_file(
+            file_path, field_name=field_name, update_parameters=update_parameters,
+            oem_parameters=oem_parameters,
+        )
+
+    def bmc_firmware_update(
+        self, flash_type: str = "FULLFwUpdate", upload_selector: Optional[str] = None
+    ) -> FirmwareUpdateResponse:
+        """Start an advertised AMI BMC firmware action; completion may restart the BMC."""
+        return self._updates.bmc_firmware_update(flash_type, upload_selector)
 
     @cached_property
     def _registries(self):

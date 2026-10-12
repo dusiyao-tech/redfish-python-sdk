@@ -439,6 +439,26 @@ class RedfishHttpClient:
         self._raise_for_status(response, path)
         return response
 
+    def post_multipart(
+        self, path: str, files: Dict[str, Any], fields: Optional[Dict[str, str]] = None
+    ) -> requests.Response:
+        """POST multipart data with a replayable body and no payload logging.
+
+        Requests generates the boundary. Encoding once keeps a complete body
+        available if the configured transport retries the upload.
+        """
+        prepared = requests.Request(
+            "POST", self._build_url("/"), files=files, data=fields
+        ).prepare()
+        response = self._request(
+            "POST", path, data=prepared.body,
+            headers={"Content-Type": prepared.headers["Content-Type"]},
+        )
+        logger.info("POST multipart %s -> HTTP %d", path, response.status_code)
+        self._store_etag(path, response)
+        self._raise_for_status(response, path)
+        return response
+
     def patch(self, path: str, model_class: Type[T], body: BaseModel,
               extra_headers: Optional[Dict[str, str]] = None) -> T:
         """

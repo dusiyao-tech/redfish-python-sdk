@@ -56,6 +56,7 @@ from .models.managers import (
 from .models.resource_key import RedfishResource
 from .models.systems import BootOption
 from .models.telemetry import MetricDefinition, MetricReport, MetricReportDefinition, TelemetryService, Triggers
+from .models.update import FirmwareUpdateResponse
 
 __version__ = "1.2.3"
 __author__ = "RedNote Infrastructure"
@@ -79,6 +80,7 @@ __all__ = [
     "BootOption",
     "DnsService",
     "Drive",
+    "FirmwareUpdateResponse",
     "EventService",
     "FirewallRules",
     "HttpsCert",

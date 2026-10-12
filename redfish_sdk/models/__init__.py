@@ -28,7 +28,7 @@ from .systems import Bios, Boot, Gpu, GpuOEM, Memory, Processor, Storage, System
 from .task import Task, TaskService
 from .telemetry import MetricDefinition, MetricReport, MetricReportDefinition, TelemetryService, Triggers
 from .thermal import HistoricalInletTempEntry, InletHistoryTemperature, Redundancy  # noqa: F401
-from .update import ClientCertificate, FirmwareInventory, UpdateService
+from .update import ClientCertificate, FirmwareInventory, FirmwareUpdateResponse, UpdateService
 
 __all__ = [
     "Link", "Entity", "Collection", "Status", "RedfishResponse", "RedfishError",
@@ -42,6 +42,7 @@ __all__ = [
     "SessionService", "Session",
     "EventService", "Subscription",
     "UpdateService", "FirmwareInventory", "ClientCertificate",
+    "FirmwareUpdateResponse",
     "Registry",
     "TaskService", "Task",
     "Oem", "Bmc", "MainBoard",
