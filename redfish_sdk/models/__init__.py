@@ -6,7 +6,7 @@ from .drive import Location  # noqa: F401
 from .event import EventService, Subscription
 from .fru import Fru, FruChassis, FruProduct
 from .logs import Log, LogEntry
-from .managers import EthernetInterface, HostInterface, Manager, NetworkProtocol
+from .managers import EthernetInterface, HostInterface, Manager, NetworkProtocol, SerialInterface
 from .memory import MemoryLocation  # noqa: F401
 from .network_adapter import Controller, ControllerCapabilities  # noqa: F401
 from .oem import Bmc, MainBoard, Oem
@@ -39,6 +39,7 @@ __all__ = [
     "Chassis", "Drive", "NetworkAdapter", "Power", "PowerSupply", "Thermal",
     "PCIeDevice", "Fan", "Temperature",
     "Manager", "NetworkProtocol", "EthernetInterface", "HostInterface",
+    "SerialInterface",
     "AccountService", "Account", "Role",
     "SessionService", "Session",
     "EventService", "Subscription",

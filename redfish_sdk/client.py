@@ -65,6 +65,7 @@ from .models.managers import (
     NetworkProtocol,
     NtpService,
     SecurityService,
+    SerialInterface,
     SnmpService,
     SolSourceControlInfo,
     SyslogService,
@@ -964,6 +965,28 @@ class RedfishClient:
             Manager resource with firmware_version, model, etc.
         """
         return self._managers.get(manager_id)
+
+    def get_serial_interfaces(self, manager_id: Optional[str] = None) -> List[SerialInterface]:
+        """List advertised Manager serial ports; IPMI SOL is optional."""
+        return self._managers.serial_interfaces(manager_id)
+
+    def get_serial_interface(
+        self, identifier: Optional[str] = None, manager_id: Optional[str] = None
+    ) -> SerialInterface:
+        """Select a serial interface by Id/URI, or auto-select a sole member."""
+        return self._managers.serial_interface(identifier, manager_id)
+
+    def update_serial_interface(
+        self, identifier: Optional[str] = None, manager_id: Optional[str] = None,
+        *, interface_enabled: Optional[bool] = None, bit_rate: Optional[str] = None,
+        data_bits: Optional[str] = None, stop_bits: Optional[str] = None,
+        parity: Optional[str] = None, flow_control: Optional[str] = None,
+    ) -> RedfishResponse:
+        """PATCH supplied serial settings using advertised constraints and the resource ETag."""
+        return self._managers.update_serial_interface(
+            identifier, manager_id, interface_enabled=interface_enabled, bit_rate=bit_rate,
+            data_bits=data_bits, stop_bits=stop_bits, parity=parity, flow_control=flow_control,
+        )
 
     def get_manager_log_services(self, manager_id: Optional[str] = None) -> List[Log]:
         """

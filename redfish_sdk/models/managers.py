@@ -76,6 +76,34 @@ class ProtocolConfig(BaseModel):
     protocol_enabled: Optional[bool] = Field(None, alias="ProtocolEnabled")
 
 
+class SerialInterface(Entity):
+    """Optional Manager serial port, including AMI IPMI-SOL configuration."""
+
+    interface_enabled: Optional[bool] = Field(None, alias="InterfaceEnabled")
+    bit_rate: Optional[str] = Field(None, alias="BitRate")
+    data_bits: Optional[str] = Field(None, alias="DataBits")
+    stop_bits: Optional[str] = Field(None, alias="StopBits")
+    parity: Optional[str] = Field(None, alias="Parity")
+    flow_control: Optional[str] = Field(None, alias="FlowControl")
+    connector_type: Optional[str] = Field(None, alias="ConnectorType")
+    pin_out: Optional[str] = Field(None, alias="PinOut")
+    signal_type: Optional[str] = Field(None, alias="SignalType")
+    actions: Optional[Dict[str, Any]] = Field(None, alias="Actions")
+    oem: Optional[Dict[str, Any]] = Field(None, alias="Oem")
+
+
+class SerialInterfacePatch(Entity):
+    """Only explicitly supplied serial configuration fields are sent."""
+
+    odata_etag: Optional[str] = Field(None, alias="@odata.etag", exclude=True)
+    interface_enabled: Optional[bool] = Field(None, alias="InterfaceEnabled")
+    bit_rate: Optional[str] = Field(None, alias="BitRate")
+    data_bits: Optional[str] = Field(None, alias="DataBits")
+    stop_bits: Optional[str] = Field(None, alias="StopBits")
+    parity: Optional[str] = Field(None, alias="Parity")
+    flow_control: Optional[str] = Field(None, alias="FlowControl")
+
+
 class HTTPSProtocol(ProtocolConfig):
     """DMTF-standard HTTPS protocol configuration."""
     certificates: Optional[Link] = Field(None, alias="Certificates")

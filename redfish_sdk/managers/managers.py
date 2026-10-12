@@ -15,6 +15,7 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING, List, Optional
 
+from .. import models
 from ..exceptions import RedfishNotFoundError, RedfishValidationError
 from ..models.common import Collection, Link
 from ..models.logs import Log, LogEntry
@@ -30,6 +31,8 @@ from ..models.managers import (
     NetworkProtocol,
     NtpService,
     SecurityService,
+    SerialInterface,
+    SerialInterfacePatch,
     SnmpService,
     SolSourceControlInfo,
     SyslogService,
@@ -725,6 +728,49 @@ class ManagersManager:
             vm_odata_id = f"{manager.odata_id}/VirtualMedia"
 
         return self._client._get_collection(vm_odata_id, VirtualMedia)
+
+    def serial_interfaces(self, manager_id: Optional[str] = None) -> List[SerialInterface]:
+        manager = self.get(manager_id)
+        link = manager.serial_interfaces
+        if not link or not link.odata_id:
+            raise RedfishNotFoundError("Manager does not advertise SerialInterfaces (IPMI SOL may be disabled)")
+        return self._client._get_collection(link.odata_id, SerialInterface)
+
+    def serial_interface(
+        self, identifier: Optional[str] = None, manager_id: Optional[str] = None
+    ) -> SerialInterface:
+        resources = self.serial_interfaces(manager_id)
+        matches = resources if identifier is None else [
+            resource for resource in resources if resource.id == identifier or resource.odata_id == identifier
+        ]
+        if not matches:
+            raise RedfishNotFoundError(f"No SerialInterface with Id or @odata.id {identifier!r}")
+        if len(matches) > 1:
+            raise RedfishValidationError("Multiple SerialInterfaces match; specify a unique @odata.id")
+        return matches[0]
+
+    def update_serial_interface(
+        self, identifier: Optional[str] = None, manager_id: Optional[str] = None,
+        *, interface_enabled: Optional[bool] = None, bit_rate: Optional[str] = None,
+        data_bits: Optional[str] = None, stop_bits: Optional[str] = None,
+        parity: Optional[str] = None, flow_control: Optional[str] = None,
+    ) -> models.RedfishResponse:
+        body = SerialInterfacePatch(
+            interface_enabled=interface_enabled, bit_rate=bit_rate, data_bits=data_bits,
+            stop_bits=stop_bits, parity=parity, flow_control=flow_control,
+        )
+        payload = body.model_dump(by_alias=True, exclude_none=True)
+        if not payload:
+            raise RedfishValidationError("Supply at least one serial configuration field")
+        interface = self.serial_interface(identifier, manager_id)
+        if not interface.odata_id:
+            raise RedfishNotFoundError("SerialInterface does not advertise @odata.id")
+        for name, value in payload.items():
+            allowed = (interface.model_extra or {}).get(f"{name}@Redfish.AllowableValues")
+            if allowed is not None and value not in allowed:
+                raise RedfishValidationError(f"Unsupported {name} {value!r}; advertised values: {allowed}")
+        body.odata_etag = interface.odata_etag
+        return self._http.patch(interface.odata_id, models.RedfishResponse, body)
 
     def sol_source(self, manager_id: Optional[str] = None) -> SolSourceControlInfo:
         """
