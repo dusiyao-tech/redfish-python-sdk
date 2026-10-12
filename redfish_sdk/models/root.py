@@ -25,6 +25,7 @@ class RootService(Entity):
 
     # Top-level resource links
     account_service: Optional[Link] = Field(None, alias="AccountService")
+    composition_service: Optional[Link] = Field(None, alias="CompositionService")
     task_service: Optional[Link] = Field(None, alias="TaskService")
     telemetry_service: Optional[Link] = Field(None, alias="TelemetryService")
     certificate_service: Optional[Link] = Field(None, alias="CertificateService")

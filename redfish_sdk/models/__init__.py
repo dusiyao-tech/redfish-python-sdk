@@ -1,6 +1,7 @@
 from .account import Account, AccountService, Role
 from .chassis import Chassis, Drive, Fan, NetworkAdapter, PCIeDevice, Power, PowerSupply, Temperature, Thermal
 from .common import Collection, Entity, Link, RedfishError, RedfishResponse, Status
+from .composition import CompositionService, ResourceBlock, ResourceZone
 from .drive import Location  # noqa: F401
 from .event import EventService, Subscription
 from .fru import Fru, FruChassis, FruProduct
@@ -47,6 +48,7 @@ __all__ = [
     "Oem", "Bmc", "MainBoard",
     "Log", "LogEntry",
     "Fru", "FruChassis", "FruProduct",
+    "CompositionService", "ResourceBlock", "ResourceZone",
     # Additional component models
     "ProcessorId", "MemoryLocation", "StorageController", "CacheSummary", "Identifier",
     "Location", "Controller", "ControllerCapabilities",
