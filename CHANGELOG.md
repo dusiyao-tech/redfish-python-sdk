@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-10-12
+
+### Added
+- Typed TelemetryService APIs for metric definitions, report definitions, reports, triggers, and metric report logs.
+- Optional CompositionService, ResourceBlock, and ResourceZone discovery APIs.
+- Typed Manager SerialInterface discovery and configuration with allowable-value validation and ETag handling.
+- AMI signing-key and firmware-image uploads, HTTP/multipart push uploads, and BMC firmware update actions with task references.
+- Manager reset, single LogService lookup, and log-clearing operations.
+- Optional SecureBoot, NetworkInterface/NetworkPort, MemoryDomain, MemoryChunks, and MemoryMetrics APIs.
+- Typed action descriptors, ActionInfo metadata, and reset request models with OEM compatibility.
+- Standard ManagerNetworkProtocol NTP, SNMP, RFB, and HTTPS certificate collection support.
+- MessageId-first EventService test events and MessageSeverity support.
+- Enginetech diagnostic log collection and firmware update strategies.
+
+### Changed
+- Cached manager cleanup discovers optional service managers automatically.
+- PCIe DeviceBDF is explicitly identified as an xFusion OEM extension.
+
+### Fixed
+- Nested Memory, BIOS, NetworkProtocol, and VirtualMedia access follows advertised resource links.
+- Default Manager and Chassis discovery preserves identifier compatibility and falls back to advertised collection members.
+- UpdateService accepts the standard MultipartHttpPushUri property and the legacy spelling.
+
 ## [1.2.3] - 2026-09-10
 
 ### Added
