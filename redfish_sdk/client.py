@@ -48,6 +48,7 @@ from .http_client import RedfishHttpClient
 from .models.account import Account, AccountService, Role
 from .models.chassis import Chassis
 from .models.common import Collection, Entity, Link, RedfishResponse
+from .models.composition import CompositionService, ResourceBlock, ResourceZone
 from .models.drive import Drive
 from .models.event import EventService, Subscription
 from .models.fru import Fru
@@ -87,13 +88,6 @@ from .models.update import ClientCertificate, FirmwareInventory, UpdateService
 logger = logging.getLogger(__name__)
 
 T = TypeVar("T", bound=Entity)
-
-# Names of all cached_property manager attributes, used by close()
-_MANAGER_ATTRS = (
-    "_systems", "_chassis", "_managers", "_accounts",
-    "_sessions", "_events", "_updates", "_registries", "_tasks", "_telemetry",
-)
-
 
 class RedfishClient:
     """
@@ -215,6 +209,30 @@ class RedfishClient:
         return TaskServiceManager(self)
 
     @cached_property
+    def _composition(self):
+        from .managers.composition import CompositionServiceManager
+        return CompositionServiceManager(self)
+
+    def get_composition_service(self) -> CompositionService:
+        """Get the optional CompositionService through its advertised root link."""
+        return self._composition.get()
+
+    def get_resource_blocks(self) -> List[ResourceBlock]:
+        """Enumerate advertised composition resource blocks."""
+        return self._composition.blocks()
+
+    def get_resource_block(self, identifier: str) -> ResourceBlock:
+        """Select a resource block by Id or advertised @odata.id."""
+        return self._composition.member(self._composition.blocks(), identifier)
+
+    def get_resource_zones(self) -> List[ResourceZone]:
+        """Enumerate Zone resources advertised by CompositionService."""
+        return self._composition.zones()
+
+    def get_resource_zone(self, identifier: str) -> ResourceZone:
+        """Select a resource zone by Id or advertised @odata.id."""
+        return self._composition.member(self._composition.zones(), identifier)
+    @cached_property
     def _telemetry(self):
         from .managers.telemetry import TelemetryServiceManager
         return TelemetryServiceManager(self)
@@ -281,8 +299,9 @@ class RedfishClient:
 
     def close(self) -> None:
         """Close the underlying HTTP session and free resources."""
-        for attr in _MANAGER_ATTRS:
-            self.__dict__.pop(attr, None)
+        for attribute in list(self.__dict__):
+            if isinstance(getattr(type(self), attribute, None), cached_property):
+                self.__dict__.pop(attribute, None)
         self._http_client.close()
         logger.info("RedfishClient closed for host: %s", self._http_client.host)
 

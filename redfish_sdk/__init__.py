@@ -36,6 +36,7 @@ from .exceptions import (
     RedfishTimeoutError,
     RedfishValidationError,
 )
+from .models.composition import CompositionService, ResourceBlock, ResourceZone
 from .models.drive import Drive
 from .models.event import EventService, Subscription
 from .models.logs import Log, LogEntry
@@ -77,6 +78,9 @@ __all__ = [
     "LogCollectFailedError",
     # Models commonly used at API boundary.
     "BootOption",
+    "CompositionService",
+    "ResourceBlock",
+    "ResourceZone",
     "DnsService",
     "Drive",
     "EventService",
