@@ -84,19 +84,6 @@ for drive in client.get_drives():
 client.close()
 ```
 
-## BMC reset and Manager logs
-
-`reset_manager()` defaults to `ForceRestart`, follows `Manager.Reset`, and
-validates inline or ActionInfo allowable values when present. This restarts
-the BMC rather than the managed system.
-
-`get_manager_log_service("SEL")` selects a fully populated advertised log;
-`clear_manager_log("SEL")` invokes its advertised `LogService.ClearLog` target.
-AuditLog, SEL, and EventLog use the same discovery logic. Pass a full advertised
-URI to disambiguate duplicate IDs; omit the ID only for a sole log service.
-Unsupported actions fail clearly. System reset and system logs remain available
-through their existing APIs.
-
 ## Testing
 
 ```bash
