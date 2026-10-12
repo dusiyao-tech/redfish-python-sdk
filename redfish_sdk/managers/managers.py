@@ -16,8 +16,9 @@ import logging
 from typing import TYPE_CHECKING, List, Optional
 
 from ..exceptions import RedfishNotFoundError, RedfishValidationError
+from ..models.actions import ActionInfo
 from ..models.common import Collection, Link, RedfishResponse
-from ..models.logs import Log, LogEntry
+from ..models.logs import Log, LogActions, LogEntry
 from ..models.managers import (
     DnsService,
     EthernetInterface,
@@ -27,6 +28,8 @@ from ..models.managers import (
     KvmService,
     LldpService,
     Manager,
+    ManagerActions,
+    ManagerResetRequest,
     NetworkProtocol,
     NtpService,
     SecurityService,
@@ -97,20 +100,16 @@ class ManagersManager:
 
     def reset(self, reset_type: str = "ForceRestart", manager_id: Optional[str] = None) -> RedfishResponse:
         manager = self.get(manager_id)
-        action = (manager.actions or {}).get("#Manager.Reset")
-        target = action.get("target") if isinstance(action, dict) else None
-        if not isinstance(target, str) or not target:
+        action = ManagerActions.model_validate(manager.actions or {}).manager_reset
+        if not action or not action.target:
             raise RedfishValidationError("Manager does not advertise #Manager.Reset with an action target")
-        allowed = action.get("ResetType@Redfish.AllowableValues")
-        if allowed is None and action.get("@Redfish.ActionInfo"):
-            info = self._http.get_raw(action["@Redfish.ActionInfo"])
-            for parameter in info.get("Parameters", []):
-                if parameter.get("Name") == "ResetType":
-                    allowed = parameter.get("AllowableValues")
-                    break
+        allowed = action.reset_type_allowable_values
+        if allowed is None and action.action_info:
+            info = self._http.get(action.action_info, ActionInfo)
+            allowed = info.allowable_values(ManagerResetRequest.model_fields["reset_type"].alias)
         if not reset_type or (allowed is not None and reset_type not in allowed):
             raise RedfishValidationError(f"Unsupported ResetType {reset_type!r}; advertised values: {allowed}")
-        return self._http.post(target, RedfishResponse, raw_body={"ResetType": reset_type})
+        return self._http.post(action.target, RedfishResponse, body=ManagerResetRequest(reset_type=reset_type))
 
     def log_service(self, log_id: Optional[str] = None, manager_id: Optional[str] = None) -> Log:
         from ._log_helpers import require_log_services_link, resolve_log_service
@@ -121,11 +120,10 @@ class ManagersManager:
 
     def clear_log(self, log_id: Optional[str] = None, manager_id: Optional[str] = None) -> None:
         log = self.log_service(log_id, manager_id)
-        action = (log.actions or {}).get("#LogService.ClearLog")
-        target = action.get("target") if isinstance(action, dict) else None
-        if not isinstance(target, str) or not target:
+        action = LogActions.model_validate(log.actions or {}).clear_log
+        if not action or not action.target:
             raise RedfishValidationError(f"Manager log {log.id!r} does not advertise #LogService.ClearLog")
-        self._http.post(target, RedfishResponse, raw_body={})
+        self._http.post(action.target, RedfishResponse, raw_body={})
 
     def log_entries(
         self,
