@@ -4,11 +4,11 @@ Update service models.
 """
 from __future__ import annotations
 
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 from pydantic import AliasChoices, Field
 
-from .common import Entity, Link, Status
+from .common import Entity, Link, RedfishResponse, Status
 
 
 class UpdateService(Entity):
@@ -27,6 +27,15 @@ class UpdateService(Entity):
     )
     service_enabled: Optional[bool] = Field(None, alias="ServiceEnabled")
     status: Optional[Status] = Field(None, alias="Status")
+    actions: Optional[Dict[str, Any]] = Field(None, alias="Actions")
+
+
+class FirmwareUpdateResponse(RedfishResponse):
+    """Firmware operation result, including HTTP task-monitor references."""
+
+    task_id: Optional[str] = Field(None, alias="TaskId", validation_alias=AliasChoices("TaskId", "Id"))
+    task_monitor: Optional[str] = Field(None, alias="TaskMonitor")
+    http_status: Optional[int] = Field(None, alias="HttpStatus")
 
 
 class FirmwareInventory(Entity):

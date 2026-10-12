@@ -9,11 +9,16 @@ Provides:
 """
 from __future__ import annotations
 
+import json
 import logging
-from typing import TYPE_CHECKING, Any, List, Optional
+from pathlib import Path
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
 
+import requests
+
+from ..exceptions import RedfishValidationError
 from ..models.common import RedfishResponse
-from ..models.update import ClientCertificate, FirmwareInventory
+from ..models.update import ClientCertificate, FirmwareInventory, FirmwareUpdateResponse
 from .update_strategies import UpdateStrategyRegistry, VendorDetector
 
 if TYPE_CHECKING:
@@ -54,6 +59,92 @@ class UpdateServiceManager:
         return self._client._get_collection(
             update_service.client_certificates.odata_id, ClientCertificate
         )
+
+    def _action(self, name: str) -> Dict[str, Any]:
+        actions = self._client._get_update_service().actions or {}
+        matches = []
+
+        def discover(container):
+            for key, value in container.items():
+                if not isinstance(value, dict):
+                    continue
+                if key.startswith("#") and key.endswith(f".{name}"):
+                    matches.append(value)
+                elif not key.startswith("#"):
+                    discover(value)
+
+        discover(actions)
+        if len(matches) != 1 or not isinstance(matches[0].get("target"), str) or not matches[0]["target"]:
+            raise RedfishValidationError(f"UpdateService does not advertise a unique {name} action target")
+        return matches[0]
+
+    def _allowed(self, action: Dict[str, Any], name: str, fallback: List[str]) -> List[str]:
+        allowed = action.get(f"{name}@Redfish.AllowableValues")
+        if allowed is None and action.get("@Redfish.ActionInfo"):
+            info = self._http.get_raw(action["@Redfish.ActionInfo"])
+            for parameter in info.get("Parameters", []):
+                if parameter.get("Name") == name:
+                    allowed = parameter.get("AllowableValues")
+                    break
+        return fallback if allowed is None else allowed
+
+    def _result(self, response: requests.Response) -> FirmwareUpdateResponse:
+        result = self._http._parse(response, FirmwareUpdateResponse) if response.text.strip() else FirmwareUpdateResponse()
+        result.task_monitor = response.headers.get("Location") or result.task_monitor
+        result.http_status = response.status_code
+        return result
+
+    def _upload(
+        self, target: str, file_path: Union[str, Path], field: str,
+        fields: Optional[Dict[str, str]] = None,
+    ) -> FirmwareUpdateResponse:
+        path = Path(file_path)
+        with path.open("rb") as image:
+            response = self._http.post_multipart(
+                target, {field: (path.name, image, "application/octet-stream")}, fields
+            )
+        return self._result(response)
+
+    def upload_sign_key(self, file_path: Union[str, Path]) -> FirmwareUpdateResponse:
+        action = self._action("UploadSignKey")
+        return self._upload(action["target"], file_path, "pem_file")
+
+    def upload_firmware_image(self, file_path: Union[str, Path]) -> FirmwareUpdateResponse:
+        action = self._action("UploadFirmwareImage")
+        return self._upload(action["target"], file_path, "image_file")
+
+    def upload_firmware_file(
+        self, file_path: Union[str, Path], *, field_name: str = "UpdateFile",
+        update_parameters: Optional[Dict[str, Any]] = None,
+        oem_parameters: Optional[Dict[str, Any]] = None,
+    ) -> FirmwareUpdateResponse:
+        service = self._client._get_update_service()
+        target = service.multi_part_http_push_uri or service.http_push_uri
+        if not target:
+            raise RedfishValidationError("UpdateService does not advertise MultipartHttpPushUri or HttpPushUri")
+        fields = {}
+        if service.multi_part_http_push_uri or update_parameters is not None:
+            fields["UpdateParameters"] = json.dumps(update_parameters or {})
+        if oem_parameters is not None:
+            fields["OemParameters"] = json.dumps(oem_parameters)
+        return self._upload(target, file_path, field_name, fields)
+
+    def bmc_firmware_update(
+        self, flash_type: str = "FULLFwUpdate", upload_selector: Optional[str] = None
+    ) -> FirmwareUpdateResponse:
+        action = self._action("BMCFwUpdate")
+        allowed = self._allowed(action, "FlashType", ["FULLFwUpdate", "DUALIMAGEFwUpdate"])
+        if flash_type not in allowed:
+            raise RedfishValidationError(f"Unsupported FlashType {flash_type!r}; allowable values: {allowed}")
+        if flash_type == "DUALIMAGEFwUpdate" and not upload_selector:
+            raise RedfishValidationError("UploadSelector is required for DUALIMAGEFwUpdate")
+        body = {"FlashType": flash_type}
+        if upload_selector is not None:
+            selectors = self._allowed(action, "UploadSelector", ["AutoInactive", "Image1", "Image2", "ImageBoth"])
+            if upload_selector not in selectors:
+                raise RedfishValidationError(f"Unsupported UploadSelector {upload_selector!r}; allowable values: {selectors}")
+            body["UploadSelector"] = upload_selector
+        return self._result(self._http.post_raw(action["target"], body))
 
     def simple_update(
         self,
