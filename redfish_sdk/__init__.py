@@ -39,11 +39,11 @@ from .exceptions import (
 from .models.drive import Drive
 from .models.event import EventService, Subscription
 from .models.logs import Log, LogEntry
-from .models.managers import KvmService
 from .models.managers import (
     DnsService,
     FirewallRules,
     HttpsCert,
+    KvmService,
     LldpService,
     NtpService,
     SecurityService,
@@ -55,12 +55,18 @@ from .models.managers import (
 )
 from .models.resource_key import RedfishResource
 from .models.systems import BootOption
+from .models.telemetry import MetricDefinition, MetricReport, MetricReportDefinition, TelemetryService, Triggers
 
 __version__ = "1.2.3"
 __author__ = "RedNote Infrastructure"
 
 __all__ = [
     "RedfishClient",
+    "TelemetryService",
+    "MetricDefinition",
+    "MetricReportDefinition",
+    "MetricReport",
+    "Triggers",
     "RedfishResource",
     "RedfishException",
     "RedfishNotFoundError",

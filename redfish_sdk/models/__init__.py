@@ -26,12 +26,14 @@ from .session import Session, SessionService
 from .storage import CacheSummary, Identifier, StorageController  # noqa: F401
 from .systems import Bios, Boot, Gpu, GpuOEM, Memory, Processor, Storage, System, Volume
 from .task import Task, TaskService
+from .telemetry import MetricDefinition, MetricReport, MetricReportDefinition, TelemetryService, Triggers
 from .thermal import HistoricalInletTempEntry, InletHistoryTemperature, Redundancy  # noqa: F401
 from .update import ClientCertificate, FirmwareInventory, UpdateService
 
 __all__ = [
     "Link", "Entity", "Collection", "Status", "RedfishResponse", "RedfishError",
     "RootService",
+    "TelemetryService", "MetricDefinition", "MetricReportDefinition", "MetricReport", "Triggers",
     "System", "Processor", "Memory", "Storage", "Volume", "Bios", "Boot", "Gpu", "GpuOEM",
     "Chassis", "Drive", "NetworkAdapter", "Power", "PowerSupply", "Thermal",
     "PCIeDevice", "Fan", "Temperature",

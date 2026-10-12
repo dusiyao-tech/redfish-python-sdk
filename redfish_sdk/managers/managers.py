@@ -406,8 +406,9 @@ class ManagersManager:
 
         """
         manager = self.get(manager_id)
+        path = manager.network_protocol and manager.network_protocol.odata_id
         return self._http.get(
-            f"{manager.odata_id}/NetworkProtocol", NetworkProtocol
+            path or f"{manager.odata_id}/NetworkProtocol", NetworkProtocol
         )
 
     def https_certificates(self, manager_id: Optional[str] = None) -> Collection[Link]:
@@ -741,11 +742,7 @@ class ManagersManager:
         manager = self.get(manager_id)
 
         # Standard Redfish path first
-        vm_odata_id = None
-        if hasattr(manager, "model_extra") and manager.model_extra:
-            vm_link = manager.model_extra.get("VirtualMedia")
-            if isinstance(vm_link, dict) and "@odata.id" in vm_link:
-                vm_odata_id = vm_link["@odata.id"]
+        vm_odata_id = manager.virtual_media and manager.virtual_media.odata_id
 
         # Fallback to OEM link
         if not vm_odata_id and manager.oem and manager.oem.bmc:

@@ -80,6 +80,7 @@ from .models.root import RootService
 from .models.session import Session, SessionService
 from .models.systems import Bios, BootOption, System, SystemPatchSetting
 from .models.task import Task, TaskService
+from .models.telemetry import MetricDefinition, MetricReport, MetricReportDefinition, TelemetryService, Triggers
 from .models.thermal import Fan, InletHistoryTemperature, Thermal
 from .models.update import ClientCertificate, FirmwareInventory, UpdateService
 
@@ -90,7 +91,7 @@ T = TypeVar("T", bound=Entity)
 # Names of all cached_property manager attributes, used by close()
 _MANAGER_ATTRS = (
     "_systems", "_chassis", "_managers", "_accounts",
-    "_sessions", "_events", "_updates", "_registries", "_tasks",
+    "_sessions", "_events", "_updates", "_registries", "_tasks", "_telemetry",
 )
 
 
@@ -212,6 +213,55 @@ class RedfishClient:
     def _tasks(self):
         from .managers.task import TaskServiceManager
         return TaskServiceManager(self)
+
+    @cached_property
+    def _telemetry(self):
+        from .managers.telemetry import TelemetryServiceManager
+        return TelemetryServiceManager(self)
+
+    def get_telemetry_service(self) -> TelemetryService:
+        """Get the optional TelemetryService through its Service Root link."""
+        return self._telemetry.get()
+
+    def get_metric_definitions(self) -> List[MetricDefinition]:
+        """Enumerate advertised metric definition members."""
+        return self._telemetry.definitions()
+
+    def get_metric_definition(self, identifier: str) -> MetricDefinition:
+        """Select a metric definition by Id or advertised @odata.id."""
+        return self._telemetry.member(self._telemetry.definitions(), identifier)
+
+    def get_metric_report_definitions(self) -> List[MetricReportDefinition]:
+        """Enumerate advertised metric report definitions."""
+        return self._telemetry.report_definitions()
+
+    def get_metric_report_definition(self, identifier: str) -> MetricReportDefinition:
+        """Select a metric report definition by Id or advertised @odata.id."""
+        return self._telemetry.member(self._telemetry.report_definitions(), identifier)
+
+    def get_metric_reports(self) -> List[MetricReport]:
+        """Enumerate advertised metric reports and their typed metric values."""
+        return self._telemetry.reports()
+
+    def get_metric_report(self, identifier: str) -> MetricReport:
+        """Select a metric report by Id or advertised @odata.id."""
+        return self._telemetry.member(self._telemetry.reports(), identifier)
+
+    def get_telemetry_triggers(self) -> List[Triggers]:
+        """Enumerate advertised telemetry triggers."""
+        return self._telemetry.triggers()
+
+    def get_telemetry_trigger(self, identifier: str) -> Triggers:
+        """Select a telemetry trigger by Id or advertised @odata.id."""
+        return self._telemetry.member(self._telemetry.triggers(), identifier)
+
+    def get_metric_report_log(self) -> Log:
+        """Get the advertised telemetry LogService/MetricReportLog."""
+        return self._telemetry.log()
+
+    def get_metric_report_log_entries(self) -> List[LogEntry]:
+        """Read telemetry log entries through their advertised collection link."""
+        return self._telemetry.log_entries()
 
     # ------------------------------------------------------------------
     # Lifecycle

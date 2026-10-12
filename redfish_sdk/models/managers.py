@@ -4,7 +4,7 @@ Manager (BMC) resource models.
 """
 from __future__ import annotations
 
-from typing import Any, List, Optional
+from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -40,6 +40,7 @@ class ManagerResetAction(ActionDescriptor):
 
 class ManagerActions(ActionMap):
     manager_reset: Optional[ManagerResetAction] = Field(None, alias="#Manager.Reset")
+    oem: Optional[Dict[str, Any]] = Field(None, alias="Oem")
 
     @field_validator("manager_reset", mode="before")
     @classmethod
@@ -75,6 +76,7 @@ class Manager(Entity):
     power_state: Optional[str] = Field(None, alias="PowerState")
     security_policy: Optional[Link] = Field(None, alias="SecurityPolicy")
     serial_interfaces: Optional[Link] = Field(None, alias="SerialInterfaces")
+    virtual_media: Optional[Link] = Field(None, alias="VirtualMedia")
     service_entry_point_uuid: Optional[str] = Field(None, alias="ServiceEntryPointUUID")
     status: Optional[Status] = Field(None, alias="Status")
     uuid: Optional[str] = Field(None, alias="UUID")
