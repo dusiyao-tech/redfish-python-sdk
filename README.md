@@ -84,18 +84,6 @@ for drive in client.get_drives():
 client.close()
 ```
 
-## Telemetry
-
-Telemetry is optional. `get_telemetry_service()` follows the Service Root link;
-`get_metric_definitions()`, `get_metric_report_definitions()`,
-`get_metric_reports()`, and `get_telemetry_triggers()` return typed members.
-Their singular counterparts accept an `Id` or the advertised `@odata.id`.
-`get_metric_report_log()` and `get_metric_report_log_entries()` follow the
-service's log links. Missing services or collections raise
-`RedfishNotFoundError`; ordinary system APIs remain available.
-
-These APIs provide read access; they do not configure telemetry reports.
-
 ## Testing
 
 ```bash
